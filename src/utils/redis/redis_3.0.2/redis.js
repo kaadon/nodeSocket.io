@@ -1,7 +1,7 @@
 const redis        = require('redis')
 const redisOptions = require('../../../config/redisConfig_3002')
 const options      = (host = false) => {
-    if (redisOptions.search(",") == -1) {
+    if (redisOptions.host.search(",") == -1) {
         host = redisOptions.host;
     } else {
         if (host) {
@@ -16,6 +16,7 @@ const options      = (host = false) => {
             host      = hostArray[0]
         }
     }
+    console.log(host)
     return {
         host          : host,
         port          : redisOptions.port,
