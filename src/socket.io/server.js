@@ -1,25 +1,25 @@
-const {Server}    = require("socket.io");
-const redis       = require("../utils/redis/redis_3.0.2/redis");
-const period      = require("../config/chain/periodTime");
+const {Server} = require("socket.io");
+const redis = require("../utils/redis/redis_3.0.2/redis");
+const period = require("../config/chain/periodTime");
 const CompressMsg = require('../utils/CompressMsg')
 
 const socketIo = (server) => {
     const io = new Server(server, {
-        pingInterval   : 5000,
+        pingInterval: 5000,
         withCredentials: true,
-        cors           : {
+        cors: {
             origin: "*"
         }
     })
     io.on('connection', socket => {
-        socket.on('getPush',async (data) => {
+        socket.on('getPush', async (data) => {
             try {
                 let meta = JSON.parse(data.toString());
                 if (meta.hasOwnProperty('type') && meta.hasOwnProperty('sub')) {
                     switch (meta.type) {
                         case 'History':
-                            lock = await redis.setnx("KlineLock:" +meta.sub + ":" + socket.id,2)
-                            if (!lock){
+                            lock = await redis.setnx("KlineLock:" + meta.sub + ":" + socket.id, 2)
+                            if (!lock) {
                                 return
                             }
                             let sub = meta.sub.split('@');
@@ -32,10 +32,10 @@ const socketIo = (server) => {
                                 let arg = ["klineHistory:" + meta.sub.replace('@', ':'), "+inf", min, "WITHSCORES", "LIMIT", 0, (meta.hasOwnProperty('limit') ? meta.limit : 500)]
                                 redis.zrevrangebyscore(arg).then(res => {
                                     socket.emit('History', CompressMsg({
-                                                                           cid  : sub[0],
-                                                                           cycle: sub[1],
-                                                                           list : res
-                                                                       }))
+                                        cid: sub[0],
+                                        cycle: sub[1],
+                                        list: res
+                                    }))
                                 })
                             }
                             break;
@@ -48,16 +48,16 @@ const socketIo = (server) => {
                             break;
                         case "BuyStatus":
                             let BuyStatusSub = meta.sub.split('@');
-                            let BuyStatusList =await redis.getValue(BuyStatusSub[0] + ":" + BuyStatusSub[1])
+                            let BuyStatusList = await redis.getValue("cache:" + BuyStatusSub[0] + ":" + BuyStatusSub[1], 1)
                             console.log(BuyStatusList)
                             // if (BuyStatusList){
                             //     BuyStatusList = JSON.parse(BuyStatusList)
                             // }
                             socket.emit('BuyStatus', CompressMsg({
-                                                                   cid  : BuyStatusSub[0],
-                                                                   cycle: BuyStatusSub[1],
-                                                                   list : BuyStatusList
-                                                               }))
+                                cid: BuyStatusSub[0],
+                                cycle: BuyStatusSub[1],
+                                list: BuyStatusList
+                            }))
                             break;
                         default:
                     }
