@@ -47,8 +47,8 @@ const socketServer = () => {
         }
         res.json(body)
     })
-    server.listen(12345, () => {
-        console.log('listening on *:12345')
+    server.listen(10099, () => {
+        console.log('listening on *:10099')
     })
 }
 module.exports     = socketServer
