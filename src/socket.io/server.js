@@ -52,6 +52,7 @@ const socketIo = (server) => {
                             if (BuyStatusList){
                                 BuyStatusList = JSON.parse(BuyStatusList)
                             }
+                            console.log(BuyStatusList)
                             socket.emit('BuyStatus', CompressMsg({
                                                                    cid  : BuyStatusSub[0],
                                                                    cycle: BuyStatusSub[1],
