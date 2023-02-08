@@ -1,7 +1,9 @@
-const {Server}      = require("socket.io");
-const CompressMsg   = require('../utils/CompressMsg')
-const {verifyToken} = require('../utils/tools/jwt')
-const socketIo = (server,uuids) => {
+const {Server}    = require("socket.io");
+const redis       = require("../utils/redis/redis_3.0.2/redis");
+const period      = require("../config/chain/periodTime");
+const CompressMsg = require('../utils/CompressMsg')
+
+const socketIo = (server) => {
     const io = new Server(server, {
         pingInterval   : 5000,
         withCredentials: true,
@@ -10,30 +12,47 @@ const socketIo = (server,uuids) => {
         }
     })
     io.on('connection', socket => {
-        let kk = verifyToken(socket.handshake.auth.token);
-        if (kk.hasOwnProperty('data')){
-            let uuidsValues = Object.values(uuids);
-            if (uuidsValues && uuidsValues.find(kk.data.mid)){
-                uuidsValues.find(kk.data.mid)
-                uuids[socket.id] = kk.data.mid
-            }
-        }
-        socket.on('getPush', async (data) => {
+        socket.on('getPush',async (data) => {
             try {
                 let meta = JSON.parse(data.toString());
                 if (meta.hasOwnProperty('type') && meta.hasOwnProperty('sub')) {
                     switch (meta.type) {
                         case 'History':
-                            socket.emit(meta.type, CompressMsg({}))
+                            lock = await redis.setnx("KlineLock:" +meta.sub + ":" + socket.id,2)
+                            if (!lock){
+                                return
+                            }
+                            let sub = meta.sub.split('@');
+                            let max = ((parseInt((new Date()).getTime() / 1000) / period[sub[1]]) - 1) * period[sub[1]];
+                            let min = "-inf";
+                            if (meta.hasOwnProperty('startTime') && meta.startTime) {
+                                min = Number(meta.startTime) + period[sub[1]]
+                            }
+                            if (min == '-inf' || min <= max) {
+                                let arg = ["klineHistory:" + meta.sub.replace('@', ':'), "+inf", min, "WITHSCORES", "LIMIT", 0, (meta.hasOwnProperty('limit') ? meta.limit : 500)]
+                                redis.zrevrangebyscore(arg).then(res => {
+                                    socket.emit('History', CompressMsg({
+                                                                           cid  : sub[0],
+                                                                           cycle: sub[1],
+                                                                           list : res
+                                                                       }))
+                                })
+                            }
                             break;
                         case "NowList":
-                            socket.emit(meta.type, CompressMsg({}))
+                            socket.emit('NowList', CompressMsg({}))
                             break;
                         case "Message":
-                            socket.emit(meta.type, CompressMsg({}))
+                            let MessageSub = meta.sub.split('@');
+                            socket.emit('Message', CompressMsg({}))
                             break;
                         case "BuyStatus":
-                            socket.emit(meta.type, CompressMsg({}))
+                            let BuyStatusSub = meta.sub.split('@');
+                            socket.emit('BuyStatus', CompressMsg({
+                                                                   cid  : BuyStatusSub[0],
+                                                                   cycle: BuyStatusSub[1],
+                                                                   list : {}
+                                                               }))
                             break;
                         default:
                     }

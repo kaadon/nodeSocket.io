@@ -1,19 +1,19 @@
 const redis        = require('redis')
 const redisOptions = require('../../../config/redisConfig_3002')
 const options      = (host = false) => {
-    if (a.search("8") == -1) {
+    if (redisOptions.search(",") == -1) {
         host = redisOptions.host;
     } else {
         if (host) {
             hostArray = redisOptions.host.split(",")
-            if (hostArray[1] === '' || hostArray[1].trim().length === 0){
+            if (hostArray[1] === '' || hostArray[1].trim().length === 0) {
                 host = hostArray[0];
-            }else {
+            } else {
                 host = hostArray[1];
             }
         } else {
             hostArray = redisOptions.host.split(",")
-            host = hostArray[0]
+            host      = hostArray[0]
         }
     }
     return {
@@ -48,11 +48,10 @@ const options      = (host = false) => {
 const client = (separate = false) => {
     return redis.createClient(options(separate))
 }
-
 // 存储值
 const setValue = (key, value, expire = null) => {
     if (typeof value === 'string') {
-        client().set(key, value)
+        client(false).set(key, value)
         if (expire && parseInt(expire) > 0) client().expire(key, parseInt(expire));
     } else if (typeof value === 'object') {
         for (let item in value) {
@@ -61,11 +60,10 @@ const setValue = (key, value, expire = null) => {
         }
     }
 }
-
 // 存储值
 const setnx = (key, expire = 20) => {
     return new Promise((resolve, reject) => {
-        client().setnx(key, key, function (err, res) {
+        client(false).setnx(key, key, function (err, res) {
             if (err) {
                 reject(new Error(err))
             } else {
@@ -81,11 +79,10 @@ const setnx = (key, expire = 20) => {
 
 
 }
-
 // 获取string
 const getValue = (key) => {
     return new Promise((resolve, reject) => {
-        client().get(key, (err, res) => {
+        client(true).get(key, (err, res) => {
             if (err) {
                 reject(err)
             } else {
@@ -94,12 +91,10 @@ const getValue = (key) => {
         })
     })
 }
-
-
 // 获取hash
 const getHValue = (key) => {
     return new Promise((resolve, reject) => {
-        client().hgetall(key, function (err, value) {
+        client(true).hgetall(key, function (err, value) {
             if (err) {
                 reject(err)
             } else {
@@ -108,14 +103,13 @@ const getHValue = (key) => {
         })
     })
 }
-
 // 集合添加
-const sadd        = (key, value) => {
+const sadd = (key, value) => {
     return new Promise((resolve, reject) => {
         if (typeof value == 'object') {
             value = JSON.stringify(value)
         }
-        client().sadd(key, value, function (err, res) {
+        client(false).sadd(key, value, function (err, res) {
             if (err) {
                 reject(err)
             } else {
@@ -124,9 +118,10 @@ const sadd        = (key, value) => {
         })
     })
 }
-const smembers    = (key) => {
+//获取 集合中的所有的成员
+const smembers = (key) => {
     return new Promise((resolve, reject) => {
-        client().smembers(key, (err, res) => {
+        client(true).smembers(key, (err, res) => {
             if (err) {
                 reject(err)
             } else {
@@ -135,9 +130,10 @@ const smembers    = (key) => {
         })
     })
 }
+//获取 集合中的一个随机元素
 const srandmember = (key) => {
     return new Promise((resolve, reject) => {
-        client().srandmember(key, (err, res) => {
+        client(true).srandmember(key, (err, res) => {
             if (err) {
                 reject(err)
             } else {
@@ -146,9 +142,10 @@ const srandmember = (key) => {
         })
     })
 }
-const srem        = (key, value) => {
+//移除 集合中的一个或多个成员元素
+const srem = (key, value) => {
     return new Promise((resolve, reject) => {
-        client().srem(key, value, function (err, res) {
+        client(false).srem(key, value, function (err, res) {
             if (err) {
                 resolve(0)
             }
@@ -156,9 +153,10 @@ const srem        = (key, value) => {
         })
     })
 }
-const del         = (key) => {
+//删除 已存在的键
+const del = (key) => {
     return new Promise((resolve, reject) => {
-        client().del(key, function (err, res) {
+        client(false).del(key, function (err, res) {
             if (err) {
                 reject(err)
             } else {
@@ -167,10 +165,10 @@ const del         = (key) => {
         })
     })
 }
-
+//获取 所有符合给定模式 pattern 的 key
 const keys = (value) => {
     return new Promise((resolve, reject) => {
-        client().keys(value, function (err, res) {
+        client(true).keys(value, function (err, res) {
             if (err) {
                 reject(err)
             } else {
@@ -179,11 +177,12 @@ const keys = (value) => {
         })
     })
 }
+//将一个或多个成员元素及其分数值加入到有序集当中。
 const zadd = (args) => {
     //args = ["myzset", 1, "one", 2, "two", 3, "three", 4, "four", 5, "five", 6, "six",  8, "eg", 9, "ni",99, "",98,
     // "酒吧"];
     return new Promise((resolve, reject) => {
-        client().zadd(args, function (addError, addResponse) {
+        client(false).zadd(args, function (addError, addResponse) {
             if (addError) {
                 reject(addError)
             } else {
@@ -192,15 +191,15 @@ const zadd = (args) => {
         });
     })
 }
-
+//获取 有序集中指定分数区间内的所有的成员。
 const zrevrangebyscore = (args) => {
-    // const max = 100;
-// const min = 5;
-// const offset = 0;
-// const count = 4;
-// const args2 = ["myzset", max, min, "WITHSCORES", "LIMIT", offset, count];
     return new Promise((resolve, reject) => {
-        client().zrevrangebyscore(args, function (rangeError, rangeResponse) {
+        // const max = 100;
+        // const min = 5;
+        // const offset = 0;
+        // const count = 4;
+        // const args2 = ["myzset", max, min, "WITHSCORES", "LIMIT", offset, count];
+        client(true).zrevrangebyscore(args, function (rangeError, rangeResponse) {
             if (rangeError) {
                 reject(new Error(addError))
             } else {
@@ -215,11 +214,11 @@ const zrevrangebyscore = (args) => {
         });
     })
 }
-
+//移除有序集中，指定分数（score）区间内的所有成员。
 const zremrangebyscore = (args) => {
-// const args = ["klineHistory:btcusdt:1m", min,max]
     return new Promise((resolve, reject) => {
-        client().zremrangebyscore(args, function (rangeError, rangeResponse) {
+        // const args = ["klineHistory:btcusdt:1m", min,max]
+        client(false).zremrangebyscore(args, function (rangeError, rangeResponse) {
             if (rangeError) {
                 reject(new Error(addError))
             } else {

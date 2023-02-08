@@ -1,3 +1,4 @@
+const redis       = require('../utils/redis/redis_3.0.2/redis')
 const CompressMsg = require('../utils/CompressMsg')
 const tickerSend  = async (io) => {
     var ticker     = {}
