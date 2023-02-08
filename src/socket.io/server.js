@@ -86,14 +86,25 @@ const socketIo = (server) => {
                             const BuyStatusType = getTypeTime(BuyStatusSub[1])
                             const BuyStatusDate = getTimeDate()
                             let BuyStatusList = await redis.zrevrangebyscore(["order:" + BuyStatusDate + ":" + BuyStatusSub[1] + ":" + BuyStatusSub[0], BuyStatusType.second, BuyStatusType.last, "WITHSCORES", "LIMIT", 0, 3], 1)
-                            console.log(BuyStatusList)
-                            // if (BuyStatusList){
-                            //     BuyStatusList = JSON.parse(BuyStatusList)
-                            // }
+                            let BuyStatusListData = {
+                                "last": [],
+                                "now": [],
+                                "second": []
+                            }
+                            if (Array.isArray(BuyStatusList) && BuyStatusList.length >= 3) {
+                                BuyStatusList.forEach(item => {
+                                    let itemData = JSON.parse(item)
+                                    BuyStatusType.forEach((iitem,index)=>{
+                                        if (itemData.begin_time == iitem){
+                                            BuyStatusListData[index] = itemData
+                                        }
+                                    })
+                                })
+                            }
                             socket.emit('BuyStatus', CompressMsg({
                                 cid: BuyStatusSub[0],
                                 cycle: BuyStatusSub[1],
-                                list: BuyStatusList
+                                list: BuyStatusListData
                             }))
                             break;
                         default:
