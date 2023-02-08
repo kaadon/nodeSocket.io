@@ -23,11 +23,11 @@
   socket.on('recive', console.log)
   socket.on('kline', console.log)
   setInterval(()=>{
-    // socket.emit('getPush', JSON.stringify({
-    //                                         "type":"History",
-    //                                         "sub":"btcusdt@1m",
-    //                                         "count":500
-    //                                       }))
+    socket.emit('getPush', JSON.stringify({
+                                            "type":"History",
+                                            "sub":"btcusdt@1m",
+                                            "count":500
+                                          }))
   },3000)
   socket.on('disconnect', reason => {
     if (reason === 'io server disconnect') {
