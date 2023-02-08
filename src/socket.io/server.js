@@ -94,8 +94,8 @@ const socketIo = (server) => {
                                 }
                                 if (Array.isArray(BuyStatusList) && BuyStatusList.length >= 3) {
                                     BuyStatusList.forEach(item => {
-                                        let itemData = JSON.parse(item)
-                                        Object.keys().forEach((iitem)=>{
+                                        let itemData = item
+                                        Object.keys(BuyStatusType).forEach((iitem)=>{
                                             if (itemData.begin_time == BuyStatusType[iitem]){
                                                 BuyStatusListData[iitem] = itemData
                                             }
