@@ -19,7 +19,6 @@ const options      = (host = false,select = null) => {
             host      = hostArray[0]
         }
     }
-    console.log(host)
     return {
         host          : host,
         port          : redisOptions.port,

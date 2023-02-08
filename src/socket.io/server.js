@@ -82,30 +82,34 @@ const socketIo = (server) => {
                             socket.emit('Message', CompressMsg({}))
                             break;
                         case "BuyStatus":
-                            let BuyStatusSub = meta.sub.split('@');
-                            const BuyStatusType = getTypeTime(BuyStatusSub[1])
-                            const BuyStatusDate = getTimeDate()
-                            let BuyStatusList = await redis.zrevrangebyscore(["order:" + BuyStatusDate + ":" + BuyStatusSub[1] + ":" + BuyStatusSub[0], BuyStatusType.second, BuyStatusType.last, "WITHSCORES", "LIMIT", 0, 3], 1)
-                            let BuyStatusListData = {
-                                "last": [],
-                                "now": [],
-                                "second": []
-                            }
-                            if (Array.isArray(BuyStatusList) && BuyStatusList.length >= 3) {
-                                BuyStatusList.forEach(item => {
-                                    let itemData = JSON.parse(item)
-                                    Object.keys().forEach((iitem)=>{
-                                        if (itemData.begin_time == BuyStatusType[iitem]){
-                                            BuyStatusListData[iitem] = itemData
-                                        }
+                            try{
+                                let BuyStatusSub = meta.sub.split('@');
+                                const BuyStatusType = getTypeTime(BuyStatusSub[1])
+                                const BuyStatusDate = getTimeDate()
+                                let BuyStatusList = await redis.zrevrangebyscore(["order:" + BuyStatusDate + ":" + BuyStatusSub[1] + ":" + BuyStatusSub[0], BuyStatusType.second, BuyStatusType.last, "WITHSCORES", "LIMIT", 0, 3], 1)
+                                let BuyStatusListData = {
+                                    "last": [],
+                                    "now": [],
+                                    "second": []
+                                }
+                                if (Array.isArray(BuyStatusList) && BuyStatusList.length >= 3) {
+                                    BuyStatusList.forEach(item => {
+                                        let itemData = JSON.parse(item)
+                                        Object.keys().forEach((iitem)=>{
+                                            if (itemData.begin_time == BuyStatusType[iitem]){
+                                                BuyStatusListData[iitem] = itemData
+                                            }
+                                        })
                                     })
-                                })
+                                }
+                                socket.emit('BuyStatus', CompressMsg({
+                                    cid: BuyStatusSub[0],
+                                    cycle: BuyStatusSub[1],
+                                    list: BuyStatusListData
+                                }))
+                            }catch (e) {
+                                console.log(e.message)
                             }
-                            socket.emit('BuyStatus', CompressMsg({
-                                cid: BuyStatusSub[0],
-                                cycle: BuyStatusSub[1],
-                                list: BuyStatusListData
-                            }))
                             break;
                         default:
                     }
