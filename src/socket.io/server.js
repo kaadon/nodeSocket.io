@@ -48,10 +48,14 @@ const socketIo = (server) => {
                             break;
                         case "BuyStatus":
                             let BuyStatusSub = meta.sub.split('@');
+                            let BuyStatusList = redis.getValue(BuyStatusSub[0] + ":" + BuyStatusSub[1])
+                            if (BuyStatusList){
+                                BuyStatusList = JSON.parse(BuyStatusList)
+                            }
                             socket.emit('BuyStatus', CompressMsg({
                                                                    cid  : BuyStatusSub[0],
                                                                    cycle: BuyStatusSub[1],
-                                                                   list : {}
+                                                                   list : BuyStatusList
                                                                }))
                             break;
                         default:
