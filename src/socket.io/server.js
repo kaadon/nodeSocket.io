@@ -48,7 +48,7 @@ const socketIo = (server) => {
                             break;
                         case "BuyStatus":
                             let BuyStatusSub = meta.sub.split('@');
-                            let BuyStatusList = redis.getValue(BuyStatusSub[0] + ":" + BuyStatusSub[1])
+                            let BuyStatusList =await redis.getValue(BuyStatusSub[0] + ":" + BuyStatusSub[1])
                             console.log(BuyStatusList)
                             // if (BuyStatusList){
                             //     BuyStatusList = JSON.parse(BuyStatusList)
