@@ -1,7 +1,7 @@
 const redis        = require('redis')
 const redisOptions = require('../../../config/redisConfig_3002')
-const options      = (host = false,select = null) => {
-    if (!select){
+const options      = (host = false, select = null) => {
+    if (!select) {
         select = redisOptions.db
     }
     if (redisOptions.host.search(",") == -1) {
@@ -32,7 +32,7 @@ const options      = (host = false,select = null) => {
                 // a individual error
                 return new Error("The server refused the connection");
             }
-            if (options.total_retry_time > 1000 * 60 * 60) {
+            if (options.total_retry_time > 1000 * 60) {
                 // End reconnecting after a specific timeout and flush all commands
                 // with a individual error
                 return new Error("Retry time exhausted");
@@ -48,13 +48,15 @@ const options      = (host = false,select = null) => {
 }
 
 // 生成redis的client
-const client = (separate = false,select = null) => {
-    return redis.createClient(options(separate,select))
+const redisClient      = (separate = false, select = null) => {
+    let optionsData = options(separate, select)
+    return redis.createClient(optionsData)
 }
 // 存储值
-const setValue = (key, value, expire = null,select = null) => {
+const setValue         = (key, value, expire = null, select = null) => {
     if (typeof value === 'string') {
-        client(false,select).set(key, value)
+        let client = redisClient(false, select)
+        client.set(key, value)
         if (expire && parseInt(expire) > 0) client().expire(key, parseInt(expire));
     } else if (typeof value === 'object') {
         for (let item in value) {
@@ -64,9 +66,10 @@ const setValue = (key, value, expire = null,select = null) => {
     }
 }
 // 存储值
-const setnx = (key, expire = 20,select = null) => {
+const setnx            = (key, expire = 20, select = null) => {
     return new Promise((resolve, reject) => {
-        client(false,select).setnx(key, key, function (err, res) {
+        let client = redisClient(false, select)
+        client.setnx(key, key, function (err, res) {
             if (err) {
                 reject(new Error(err))
             } else {
@@ -83,9 +86,10 @@ const setnx = (key, expire = 20,select = null) => {
 
 }
 // 获取string
-const getValue = (key,select = null) => {
+const getValue         = (key, select = null) => {
     return new Promise((resolve, reject) => {
-        client(true,select).get(key, (err, res) => {
+        let client = redisClient(true, select)
+        client.get(key, (err, res) => {
             if (err) {
                 reject(err)
             } else {
@@ -95,9 +99,10 @@ const getValue = (key,select = null) => {
     })
 }
 // 获取hash
-const getHValue = (key,select = null) => {
+const getHValue        = (key, select = null) => {
     return new Promise((resolve, reject) => {
-        client(true,select).hgetall(key, function (err, value) {
+        let client = redisClient(true, select)
+        client.hgetall(key, function (err, value) {
             if (err) {
                 reject(err)
             } else {
@@ -107,12 +112,13 @@ const getHValue = (key,select = null) => {
     })
 }
 // 集合添加
-const sadd = (key, value,select = null) => {
+const sadd             = (key, value, select = null) => {
     return new Promise((resolve, reject) => {
         if (typeof value == 'object') {
             value = JSON.stringify(value)
         }
-        client(false,select).sadd(key, value, function (err, res) {
+        let client = redisClient(false, select)
+        client.sadd(key, value, function (err, res) {
             if (err) {
                 reject(err)
             } else {
@@ -122,9 +128,10 @@ const sadd = (key, value,select = null) => {
     })
 }
 //获取 集合中的所有的成员
-const smembers = (key,select = null) => {
+const smembers         = (key, select = null) => {
     return new Promise((resolve, reject) => {
-        client(true,select).smembers(key, (err, res) => {
+        let client = redisClient(true, select)
+        client.smembers(key, (err, res) => {
             if (err) {
                 reject(err)
             } else {
@@ -134,9 +141,10 @@ const smembers = (key,select = null) => {
     })
 }
 //获取 集合中的一个随机元素
-const srandmember = (key,select = null) => {
+const srandmember      = (key, select = null) => {
     return new Promise((resolve, reject) => {
-        client(true,select).srandmember(key, (err, res) => {
+        let client = redisClient(true, select)
+        client.srandmember(key, (err, res) => {
             if (err) {
                 reject(err)
             } else {
@@ -146,9 +154,10 @@ const srandmember = (key,select = null) => {
     })
 }
 //移除 集合中的一个或多个成员元素
-const srem = (key, value,select = null) => {
+const srem             = (key, value, select = null) => {
     return new Promise((resolve, reject) => {
-        client(false,select).srem(key, value, function (err, res) {
+        let client = redisClient(false, select)
+        client.srem(key, value, function (err, res) {
             if (err) {
                 resolve(0)
             }
@@ -157,9 +166,10 @@ const srem = (key, value,select = null) => {
     })
 }
 //删除 已存在的键
-const del = (key,select = null) => {
+const del              = (key, select = null) => {
     return new Promise((resolve, reject) => {
-        client(false,select).del(key, function (err, res) {
+        let client = redisClient(false, select)
+        client.del(key, function (err, res) {
             if (err) {
                 reject(err)
             } else {
@@ -169,9 +179,11 @@ const del = (key,select = null) => {
     })
 }
 //获取 所有符合给定模式 pattern 的 key
-const keys = (value,select = null) => {
+const keys             = (value, select = null) => {
     return new Promise((resolve, reject) => {
-        client(true,select).keys(value, function (err, res) {
+
+        let client = redisClient(true, select)
+        client.keys(value, function (err, res) {
             if (err) {
                 reject(err)
             } else {
@@ -181,11 +193,12 @@ const keys = (value,select = null) => {
     })
 }
 //将一个或多个成员元素及其分数值加入到有序集当中。
-const zadd = (args,select = null) => {
+const zadd             = (args, select = null) => {
     //args = ["myzset", 1, "one", 2, "two", 3, "three", 4, "four", 5, "five", 6, "six",  8, "eg", 9, "ni",99, "",98,
     // "酒吧"];
     return new Promise((resolve, reject) => {
-        client(false,select).zadd(args, function (addError, addResponse) {
+        let client = redisClient(false, select)
+        client.zadd(args, function (addError, addResponse) {
             if (addError) {
                 reject(addError)
             } else {
@@ -195,14 +208,16 @@ const zadd = (args,select = null) => {
     })
 }
 //获取 有序集中指定分数区间内的所有的成员。
-const zrevrangebyscore = (args,select = null) => {
+const zrevrangebyscore = (args, select = null) => {
     return new Promise((resolve, reject) => {
         // const max = 100;
         // const min = 5;
         // const offset = 0;
         // const count = 4;
         // const args2 = ["myzset", max, min, "WITHSCORES", "LIMIT", offset, count];
-        client(true,select).zrevrangebyscore(args, function (rangeError, rangeResponse) {
+
+        let client = redisClient(true, select)
+        client.zrevrangebyscore(args, function (rangeError, rangeResponse) {
             if (rangeError) {
                 reject(new Error(addError))
             } else {
@@ -218,10 +233,11 @@ const zrevrangebyscore = (args,select = null) => {
     })
 }
 //移除有序集中，指定分数（score）区间内的所有成员。
-const zremrangebyscore = (args,select = null) => {
+const zremrangebyscore = (args, select = null) => {
     return new Promise((resolve, reject) => {
         // const args = ["klineHistory:btcusdt:1m", min,max]
-        client(false,select).zremrangebyscore(args, function (rangeError, rangeResponse) {
+        let client = redisClient(false, select)
+        client.zremrangebyscore(args, function (rangeError, rangeResponse) {
             if (rangeError) {
                 reject(new Error(addError))
             } else {

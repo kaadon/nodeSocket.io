@@ -38,18 +38,6 @@ const getTypeTime = (type = "1m") => {
         "second": (now + 1) * timeType[type]
     }
 }
-const BuyStatusFun = async (meta,socket,index = 1) => {
-    try{
-
-        // if (index == 1){
-        //     setTimeout(()=>{
-        //         BuyStatusFun(meta,socket,index + 1)
-        //     },3000)
-        // }
-    }catch (e) {
-        throw Error(e.message)
-    }
-}
 const socketIo = (server) => {
     const io = new Server(server, {
         pingInterval: 5000,
