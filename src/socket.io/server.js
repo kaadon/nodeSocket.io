@@ -64,11 +64,11 @@ const BuyStatusFun = async (meta,socket,index = 1) => {
                                                  cycle: BuyStatusSub[1],
                                                  list: BuyStatusListData
                                              }))
-        if (index == 1){
-            setTimeout(()=>{
-                BuyStatusFun(meta,socket,index + 1)
-            },3000)
-        }
+        // if (index == 1){
+        //     setTimeout(()=>{
+        //         BuyStatusFun(meta,socket,index + 1)
+        //     },3000)
+        // }
     }catch (e) {
         console.log(e.message)
     }
@@ -117,7 +117,7 @@ const socketIo = (server) => {
                             socket.emit('Message', CompressMsg({}))
                             break;
                         case "BuyStatus":
-                            BuyStatusFun(meta,socket,1)
+                            await BuyStatusFun(meta,socket,1)
                             break;
                         default:
                     }
