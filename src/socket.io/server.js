@@ -70,7 +70,7 @@ const BuyStatusFun = async (meta,socket,index = 1) => {
         //     },3000)
         // }
     }catch (e) {
-        console.log(e.message)
+        throw Error(e.message)
     }
 }
 const socketIo = (server) => {
@@ -117,7 +117,11 @@ const socketIo = (server) => {
                             socket.emit('Message', CompressMsg({}))
                             break;
                         case "BuyStatus":
-                            await BuyStatusFun(meta,socket,1)
+                            try{
+                                await BuyStatusFun(meta,socket,1)
+                            }catch (e) {
+                                throw Error(e.message)
+                            }
                             break;
                         default:
                     }
