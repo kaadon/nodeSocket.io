@@ -38,6 +38,41 @@ const getTypeTime = (type = "1m") => {
         "second": (now + 1) * timeType[type]
     }
 }
+const BuyStatusFun = async (meta,socket,index = 1) => {
+    try{
+        let BuyStatusSub = meta.sub.split('@');
+        const BuyStatusType = getTypeTime(BuyStatusSub[1])
+        const BuyStatusDate = getTimeDate()
+        let BuyStatusList = await redis.zrevrangebyscore(["order:" + BuyStatusDate + ":" + BuyStatusSub[1] + ":" + BuyStatusSub[0], BuyStatusType.second, BuyStatusType.last, "WITHSCORES", "LIMIT", 0, 3], 1)
+        let BuyStatusListData = {
+            "last": [],
+            "now": [],
+            "second": []
+        }
+        if (Array.isArray(BuyStatusList) && BuyStatusList.length >= 3) {
+            BuyStatusList.forEach(item => {
+                let itemData = item
+                Object.keys(BuyStatusType).forEach((iitem)=>{
+                    if (itemData.begin_time == BuyStatusType[iitem]){
+                        BuyStatusListData[iitem] = itemData
+                    }
+                })
+            })
+        }
+        socket.emit('BuyStatus', CompressMsg({
+                                                 cid: BuyStatusSub[0],
+                                                 cycle: BuyStatusSub[1],
+                                                 list: BuyStatusListData
+                                             }))
+        if (index == 1){
+            setTimeout(()=>{
+                BuyStatusFun(meta,socket,index + 1)
+            },3000)
+        }
+    }catch (e) {
+        console.log(e.message)
+    }
+}
 const socketIo = (server) => {
     const io = new Server(server, {
         pingInterval: 5000,
@@ -82,34 +117,7 @@ const socketIo = (server) => {
                             socket.emit('Message', CompressMsg({}))
                             break;
                         case "BuyStatus":
-                            try{
-                                let BuyStatusSub = meta.sub.split('@');
-                                const BuyStatusType = getTypeTime(BuyStatusSub[1])
-                                const BuyStatusDate = getTimeDate()
-                                let BuyStatusList = await redis.zrevrangebyscore(["order:" + BuyStatusDate + ":" + BuyStatusSub[1] + ":" + BuyStatusSub[0], BuyStatusType.second, BuyStatusType.last, "WITHSCORES", "LIMIT", 0, 3], 1)
-                                let BuyStatusListData = {
-                                    "last": [],
-                                    "now": [],
-                                    "second": []
-                                }
-                                if (Array.isArray(BuyStatusList) && BuyStatusList.length >= 3) {
-                                    BuyStatusList.forEach(item => {
-                                        let itemData = item
-                                        Object.keys(BuyStatusType).forEach((iitem)=>{
-                                            if (itemData.begin_time == BuyStatusType[iitem]){
-                                                BuyStatusListData[iitem] = itemData
-                                            }
-                                        })
-                                    })
-                                }
-                                socket.emit('BuyStatus', CompressMsg({
-                                    cid: BuyStatusSub[0],
-                                    cycle: BuyStatusSub[1],
-                                    list: BuyStatusListData
-                                }))
-                            }catch (e) {
-                                console.log(e.message)
-                            }
+                            BuyStatusFun(meta,socket,1)
                             break;
                         default:
                     }
